@@ -6,7 +6,7 @@ pipeline
         stage(' GIT ') {
             steps {
                 echo 'Pulliing ...';
-                git branch: 'master', url: 'https://github.com/abdelmomen-bz/CD-Project.git'          
+                git branch: 'main', url: 'https://github.com/abdelmomen-bz/CD-Project.git'          
             }
      
         }
