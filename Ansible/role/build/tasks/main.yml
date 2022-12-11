@@ -1,0 +1,4 @@
+---
+# tasks file for build
+- name: build app
+  shell: ng build  && chmod 777 -R /var/lib/jenkins/workspace/angularproject/dist/
