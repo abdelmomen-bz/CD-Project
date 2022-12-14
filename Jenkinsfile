@@ -17,7 +17,7 @@ pipeline
             }
         }
 
-/*
+
         stage(' BUILD ') {
             steps {
             sh ' npm run build --prod'
@@ -47,6 +47,6 @@ pipeline
                 script {
                     sh ' ansible-playbook ansible/docker-registry.yml -i ansible/inventory/host.yml '
                  }
-                 }*/
+                 }
             }
         }
