@@ -1,54 +1,74 @@
-pipeline
-{
-    agent any
-     stages {
-      
-        stage(' GIT ') {
-            steps {
-                echo 'Pulliing ...';
-                git branch: 'main', url: 'https://github.com/abdelmomen-bz/CD-Project.git'          
-            }
-     
-        }
-        stage(' install node modules ') {
-            steps {
-            sh ' npm install' 
-            
-            }
-        }
+pipeline {
 
-
-        stage(' BUILD ') {
+	agent any
+  tools 
+  { nodejs '16.10.0' }  
+  
+	stages {
+		
+		stage('Git ') {
             steps {
-            sh ' npm run build --prod'
-            }
-        } 
-
-        stage(' BUILD ') {
+                echo 'pulling Main Project from git ...';
+                git branch: 'main', credentialsId: 'git', url: 'https://github.com/abdelmomen-bz/CD-Project.git'            }
+        }
+    
+ /*      stage('Docker Build and Push') {
+       steps {
+         withDockerRegistry([credentialsId: "docker-hub", url: ""]) {
+         /*  sh 'sudo docker build -t amineturki/cd:latest .'
+           sh 'docker push amineturki/cd:latest '  
+           sh 'echo "docker logged in "'
+         }
+       }
+     } */
+	 
+	 	stage('Ansible playbook for test') {
             steps {
-                script {
-                    sh ' ansible-playbook ansible/build.yml -i ansible/inventory/host.yml '
-                 }
-            }
+               sh 'echo $PATH'
+               sh 'ng version'
+                sh 'ansible-playbook playbook-test.yml'
+                         }
         }
+     	
+    
 
-        stage(' DOCKER ') {
+ 
+
+ stage('Ansible playbook for building the app') {
             steps {
-                script {
-                    sh ' ansible-playbook ansible/docker.yml -i ansible/inventory/host.yml '
-                 }
-            }
+                sh 'ansible-playbook ansible/build.yml -i ansible/inventory/hosts.yml'
+                         }
         }
-
-
-        stage(' DOCKER REGISTRY') {
+    
+    stage('Ansible playbook for building the image and running the container') {
             steps {
-                withDockerRegistry([credentialsId: "docker-hubb", url: ""]) {
-                script {
-                    sh ' ansible-playbook ansible/docker-registry.yml -i ansible/inventory/host.yml '
-                 }
-                 }
-            }
+                sh 'ansible-playbook ansible/docker.yml -i ansible/inventory/hosts.yml'
+                         }
         }
+        stage('Ansible playbook for pushing the image to a dockerhub repository') {
+            steps {
+                sh 'ansible-playbook ansible/docker-registry.yml -i ansible/inventory/hosts.yml'
+                         }
         }
-        }
+    
+        	       stage('deploy to kubernetes?') {
+       steps {
+         timeout(time: 1, unit: 'DAYS') {
+           input 'Do you want to Approve the Deployment to Kubernetes ?'
+         }
+       }
+     }
+    
+    stage('deploy to kubernetes') {
+      steps {
+         withKubeConfig([credentialsId: 'kubeconfig']) {
+       sh 'ansible-playbook ansible/kubernetes.yml -i ansible/inventory/host-amine.yml'
+
+         }
+       }
+     }
+    
+
+	 
+	}
+	}
